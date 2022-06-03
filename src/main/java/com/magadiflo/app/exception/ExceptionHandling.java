@@ -18,6 +18,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import javax.persistence.NoResultException;
 import java.io.IOException;
@@ -109,6 +110,33 @@ public class ExceptionHandling {
     public ResponseEntity<HttpResponse> methodNotSupportedException(HttpRequestMethodNotSupportedException e) {
         HttpMethod supportedMethod = Objects.requireNonNull(e.getSupportedHttpMethods()).iterator().next();
         return this.createHttpResponse(HttpStatus.METHOD_NOT_ALLOWED, String.format(METHOD_IS_NOT_ALLOWED, supportedMethod));
+    }
+
+    /**
+     * Esta excepción se lanza cuando no hay un manejador que se encuentre.
+     * Para que esto suceda, tuvo que haberse configurado en el archivo application.yml
+     * spring:
+     *      mvc:
+     *          throw-exception-if-no-handler-found: true
+     *      web:
+     *          resources:
+     *              add-mappings: false
+     *
+     * NOTA: En el tutorial la ruta del add-mappings es:
+     * spring:
+     *      resources:
+     *          add-mappings: false
+     * En mi caso no funcionó esa ruta, por lo que investigando encontré la otra ruta
+     * (spring.web.resources.add-mappings:true) que muestra el mensaje de error personalizado.
+     *
+     * RAZÓN POR LA QUE NO SE PREFIERE ESTA FORMA
+     * ResourceHttpRequestHandler, es la que se estaría deshabilitando para poder mostrar nuestro
+     * mensaje personalizado y no el mensaje de error que por defecto Spring muestra. Al deshabilitarlo
+     * estaríamos deshabilitando muestras otras funcionalidades que no quisiéramos que se deshabiliten
+     */
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<HttpResponse> noHandlerFoundException() {
+        return this.createHttpResponse(HttpStatus.BAD_REQUEST, "There is no mapping for this URL");
     }
 
     @ExceptionHandler(NoResultException.class)
