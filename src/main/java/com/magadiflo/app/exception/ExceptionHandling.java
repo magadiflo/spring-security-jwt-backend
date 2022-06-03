@@ -8,6 +8,7 @@ import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,8 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.NoHandlerFoundException;
 
 import javax.persistence.NoResultException;
 import java.io.IOException;
@@ -28,10 +29,36 @@ import java.util.Objects;
  * @RestControllerAdvice. Permitirá que esta clase sea un controlador
  * para manejar las excepciones. Es decir, apenas se produzca una excepción
  * esta clase va a realizar el tratamiento según el tipo de excepción producida
+ * <p>
+ * >>> Sobreescribir la página de error por defecto de Spring <<<
+ *
+ * 1) ErrorController, importante implementarlo para poder cambiar la página
+ * mostrada por defecto al acceder a una ruta no definida. Anteriormente,
+ * definía un método getErrorPath(), pero en versiones actuales de Spring Boot
+ * ya está deprecated since 2.3.0.
+ * 2) Se recomienda configurar la propiedad `server.error.path`,
+ * en el archivo application.yml mapeándolo a una ruta, ejm. /error.
+ * En nuestro caso sería:
+ * server:
+ *   error:
+ *     path: /error
+ * 3) Definir un método handler (@RequestMapping("/error")) que esté mapeado
+ * al path definido en el application.yml (/error), dicho método devolverá una
+ * respuesta personalizada, en nuestro caso en formato JSON
+ * 4) Importante definir un @RequestMapping mapeado a un "/" ya que Spring al lanzar
+ * el error mapeado al path definido en el application.yml tomará el "/" como base:
+ *      http://localhost:8081/error
+ * En nuestro caso, solo tenemos un Recurso UserResource donde teníamos
+ * definido un @RequestMapping(value = "/users"), lo que causaba que al ejecutar e
+ * ingresar por una url no definida el path /error se concatene de esta manera:
+ *      http://localhost:8081/users/error
+ * Esto provocaba que no se muestre nuestro método handler personalizado.
+ * Para solucionarlo se agregó el "/" al request mapping quedando:
+ *      @RequestMapping(path = {"/", "/users"})
  */
 
 @RestControllerAdvice
-public class ExceptionHandling {
+public class ExceptionHandling implements ErrorController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String ACCOUNT_LOCKED = "Your account has been locked. Please contact administration";
@@ -41,6 +68,12 @@ public class ExceptionHandling {
     private static final String ACCOUNT_DISABLED = "Your account has been disabled. If this is an error, please contact administration";
     private static final String ERROR_PROCESSING_FILE = "Error occurred while processing file";
     private static final String NOT_ENOUGH_PERMISSION = "You do not have enough permission";
+    public static final String ERROR_PATH = "/error";
+
+    @RequestMapping(ERROR_PATH)
+    public ResponseEntity<HttpResponse> notFound404() {
+        return this.createHttpResponse(HttpStatus.NOT_FOUND, "There is no mapping for this URL");
+    }
 
     /**
      * NOTA: Se puede pasar por argumento la excepción misma, esto permitirá
@@ -103,40 +136,10 @@ public class ExceptionHandling {
         return this.createHttpResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    /**
-     * Se lanzará si el usuario intente hacer una petición con un método http incorrecto
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<HttpResponse> methodNotSupportedException(HttpRequestMethodNotSupportedException e) {
         HttpMethod supportedMethod = Objects.requireNonNull(e.getSupportedHttpMethods()).iterator().next();
         return this.createHttpResponse(HttpStatus.METHOD_NOT_ALLOWED, String.format(METHOD_IS_NOT_ALLOWED, supportedMethod));
-    }
-
-    /**
-     * Esta excepción se lanza cuando no hay un manejador que se encuentre.
-     * Para que esto suceda, tuvo que haberse configurado en el archivo application.yml
-     * spring:
-     *      mvc:
-     *          throw-exception-if-no-handler-found: true
-     *      web:
-     *          resources:
-     *              add-mappings: false
-     *
-     * NOTA: En el tutorial la ruta del add-mappings es:
-     * spring:
-     *      resources:
-     *          add-mappings: false
-     * En mi caso no funcionó esa ruta, por lo que investigando encontré la otra ruta
-     * (spring.web.resources.add-mappings:true) que muestra el mensaje de error personalizado.
-     *
-     * RAZÓN POR LA QUE NO SE PREFIERE ESTA FORMA
-     * ResourceHttpRequestHandler, es la que se estaría deshabilitando para poder mostrar nuestro
-     * mensaje personalizado y no el mensaje de error que por defecto Spring muestra. Al deshabilitarlo
-     * estaríamos deshabilitando muestras otras funcionalidades que no quisiéramos que se deshabiliten
-     */
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<HttpResponse> noHandlerFoundException() {
-        return this.createHttpResponse(HttpStatus.BAD_REQUEST, "There is no mapping for this URL");
     }
 
     @ExceptionHandler(NoResultException.class)
