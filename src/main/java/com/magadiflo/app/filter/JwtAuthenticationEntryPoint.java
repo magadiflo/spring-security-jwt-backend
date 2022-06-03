@@ -3,6 +3,8 @@ package com.magadiflo.app.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.magadiflo.app.constant.SecurityConstant;
 import com.magadiflo.app.domain.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -26,9 +28,14 @@ import java.io.OutputStream;
 @Component
 public class JwtAuthenticationEntryPoint extends Http403ForbiddenEntryPoint {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
             throws IOException {
+
+        this.logger.info("Llamando a un punto de entrada pre-autenticado. Rechazar el acceso: cod. 403");
+
         HttpResponse httpResponse = new HttpResponse(HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN,
                 HttpStatus.FORBIDDEN.getReasonPhrase().toUpperCase(), SecurityConstant.FORBIDDEN_MESSAGE);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

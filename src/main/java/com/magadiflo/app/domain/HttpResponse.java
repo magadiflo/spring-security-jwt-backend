@@ -1,7 +1,9 @@
 package com.magadiflo.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.http.HttpStatus;
 
+import java.util.Date;
 /**
  * La respuesta que enviemos al cliente
  * incluirá esta clase. Esto con la
@@ -21,6 +23,9 @@ public class HttpResponse {
     private String reason; //OK
     private String message;//Your request was successful
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss", timezone = "America/Lima")
+    private Date timeStamp;
+
     public HttpResponse() {
     }
 
@@ -29,6 +34,7 @@ public class HttpResponse {
         this.httpStatus = httpStatus;
         this.reason = reason;
         this.message = message;
+        this.timeStamp = new Date();
     }
 
     public int getHttpStatusCode() {
@@ -61,5 +67,13 @@ public class HttpResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Date getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(Date timeStamp) {
+        this.timeStamp = timeStamp;
     }
 }
