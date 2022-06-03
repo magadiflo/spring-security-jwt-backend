@@ -2,9 +2,12 @@ package com.magadiflo.app.resource;
 
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.exception.ExceptionHandling;
+import com.magadiflo.app.exception.domain.EmailExistException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.persistence.NoResultException;
 
 /**
  * Cada vez que ocurra una excepción en esta clase (UserResource),
@@ -18,8 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserResource extends ExceptionHandling {
 
     @GetMapping("/home")
-    public String home() {
-        return "Application works";
+    public String home() throws NoResultException {
+        throw new NoResultException("No se encontraron resultados para la búsqueda!");
+        //return "Application works";
     }
 
 }
