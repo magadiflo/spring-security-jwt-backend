@@ -17,7 +17,7 @@ import javax.persistence.NoResultException;
  */
 
 @RestController
-@RequestMapping(path = {"/", "/users"})
+@RequestMapping(path = {"/", "/user"})
 public class UserResource extends ExceptionHandling {
 
     @GetMapping("/home")

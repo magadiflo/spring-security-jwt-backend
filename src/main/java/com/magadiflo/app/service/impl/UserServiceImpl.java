@@ -2,11 +2,13 @@ package com.magadiflo.app.service.impl;
 
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
+import com.magadiflo.app.enumeration.Role;
 import com.magadiflo.app.exception.domain.EmailExistException;
 import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.repository.IUserRepository;
 import com.magadiflo.app.service.IUserService;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +17,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Date;
 import java.util.List;
@@ -31,9 +35,12 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final IUserRepository userRepository;
 
+    private BCryptPasswordEncoder passwordEncoder;
+
     @Autowired //Inyección de Dependencia basada en el constructor (Es la recomendada)
-    public UserServiceImpl(IUserRepository userRepository) {
+    public UserServiceImpl(IUserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -63,7 +70,29 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
             throws UserNotFoundException, EmailExistException, UsernameExistException {
 
         this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
-        return null;
+        String password = this.generatePassword();
+        String encodePassword = this.encodePassword(password);
+
+        User user = new User();
+        user.setUserId(this.generateUserId());
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setJoinDate(new Date());
+        user.setPassword(encodePassword);
+        user.setActive(true);
+        user.setNotLocked(true);
+        user.setRole(Role.ROLE_USER.name());
+        user.setAuthorities(Role.ROLE_USER.getAuthorities());
+        user.setProfileImageUrl(this.getTemporaryProfileImageUrl());
+
+        this.userRepository.save(user);
+        logger.info("New user password {}", password);
+
+        //TODO: send password to user registered
+
+        return user;
     }
 
     @Override
@@ -117,5 +146,23 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
             return null;
         }
+    }
+
+    private String generateUserId() {
+        return RandomStringUtils.randomNumeric(10);
+    }
+
+    private String generatePassword() {
+        return RandomStringUtils.randomAlphanumeric(10);
+    }
+
+    private String encodePassword(String password) {
+        return this.passwordEncoder.encode(password);
+    }
+
+    private String getTemporaryProfileImageUrl() {
+        //ServletUriComponentsBuilder.fromCurrentContextPath(), devuelve cualquiera sea la URL del servidor real
+        //Por ejemplo si estamos en local sería: http://localhost:8081
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/profile/temp").toUriString();
     }
 }
