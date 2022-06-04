@@ -2,6 +2,9 @@ package com.magadiflo.app.service.impl;
 
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
+import com.magadiflo.app.exception.domain.EmailExistException;
+import com.magadiflo.app.exception.domain.UserNotFoundException;
+import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.repository.IUserRepository;
 import com.magadiflo.app.service.IUserService;
 import org.apache.commons.lang3.StringUtils;
@@ -56,8 +59,10 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     }
 
     @Override
-    public User register(String firstName, String lastName, String username, String email) {
-        //this.validateNewUsernameAndEmail();
+    public User register(String firstName, String lastName, String username, String email)
+            throws UserNotFoundException, EmailExistException, UsernameExistException {
+
+        this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
         return null;
     }
 
@@ -76,13 +81,41 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         return null;
     }
 
-    private User validateNewUsernameAndEmail(String currentUsername, String newUsername, String newEmail) {
-        if (StringUtils.isNotBlank(currentUsername)) {
+    private User validateNewUsernameAndEmail(String currentUsername, String newUsername, String newEmail)
+            throws UserNotFoundException, UsernameExistException, EmailExistException {
+
+        if (StringUtils.isNotBlank(currentUsername)) {//Si el currentUsername no está en blanco, entonces se está tratando de ACTUALIZAR
+            //Verificamos si existe el usuario con el username actual proporcionado
             User currentUser = this.findUserByUsername(currentUsername);
             if (currentUser == null) {
-                throw new UsernameNotFoundException("No user found by username ".concat(currentUsername));
+                throw new UserNotFoundException("No user found by username ".concat(currentUsername));
             }
+
+            //Verificamos si el nuevo username ya alguien lo tiene registrado y además no es el mismo usuario actual
+            User userByUsername = this.findUserByUsername(newUsername);
+            if (userByUsername != null && !currentUser.getId().equals(userByUsername.getId())) {
+                throw new UsernameExistException("Username already exists");
+            }
+
+            //Verificamos si el nuevo email ya alguien lo tiene registrado y además no es el mismo usuario actual
+            User userByEmail = this.findUserByEmail(newEmail);
+            if (userByEmail != null && !currentUser.getId().equals(userByEmail.getId())) {
+                throw new EmailExistException("Email already exists");
+            }
+
+            return currentUser;
+        } else { //Si es un nuevo usuario que se intenta crear
+            User userByUsername = this.findUserByUsername(newUsername);
+            if (userByUsername != null) { //Ese newUsername ya alguien lo tiene tomado
+                throw new UsernameExistException("Username already exists");
+            }
+
+            User userByEmail = this.findUserByEmail(newEmail);
+            if (userByEmail != null) { //Ese newEmail ya alguien lo tiene tomado
+                throw new EmailExistException("Email already exists");
+            }
+
+            return null;
         }
-        return null;
     }
 }
