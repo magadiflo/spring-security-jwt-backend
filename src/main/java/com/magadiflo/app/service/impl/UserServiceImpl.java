@@ -121,14 +121,14 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
             }
 
             //Verificamos si el nuevo username ya alguien lo tiene registrado y además no es el mismo usuario actual
-            User userByUsername = this.findUserByUsername(newUsername);
-            if (userByUsername != null && !currentUser.getId().equals(userByUsername.getId())) {
+            User userByNewUsername = this.findUserByUsername(newUsername);
+            if (userByNewUsername != null && !currentUser.getId().equals(userByNewUsername.getId())) {
                 throw new UsernameExistException("Username already exists");
             }
 
             //Verificamos si el nuevo email ya alguien lo tiene registrado y además no es el mismo usuario actual
-            User userByEmail = this.findUserByEmail(newEmail);
-            if (userByEmail != null && !currentUser.getId().equals(userByEmail.getId())) {
+            User userByNewEmail = this.findUserByEmail(newEmail);
+            if (userByNewEmail != null && !currentUser.getId().equals(userByNewEmail.getId())) {
                 throw new EmailExistException("Email already exists");
             }
 
