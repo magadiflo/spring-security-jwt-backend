@@ -33,7 +33,18 @@ public class UserResource extends ExceptionHandling {
     private final AuthenticationManager authenticationManager;
     private final JWTTokenProvider jwtTokenProvider;
 
-    @Autowired
+    /******* INYECCIÓN DE DEPENDENCIA POR CONSTRUCTOR *******
+     * Cuando se inyecta vía constructor la anotación @Autowired normalmente no es necesaria
+     * (esto es así desde la versión 4.3 de spring) y la manera recomendada de inyectar
+     * por la documentación oficial es de hecho la de constructor. En nuestro caso, estábamos
+     * usando la anotación @Autowired, luego enterándonos de esta manera de
+     * hacer la inyección de dependencia, se decidió quitar la anotación @Autowired
+     * del constructor, al menos en esta clase y al ejecutarlo funciona bien.
+     * Ver documento oficial:
+     * <a href="https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-constructor-injection">beans-constructor-injection</a>
+     * Ver documento explicativo:
+     * <a href="https://www.dev-util.com/java/spring-framework/inyeccion-de-dependencias-autowired-o-por-constructor-en-spring#_inyecci%C3%B3n_por_constructor">Inyección de dependencias en Spring Framework</a>
+     */
     public UserResource(IUserService userService, AuthenticationManager authenticationManager, JWTTokenProvider jwtTokenProvider) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;

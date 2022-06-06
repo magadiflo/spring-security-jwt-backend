@@ -92,7 +92,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         this.userRepository.save(user);
         logger.info("New user password {}", password);
 
-        //TODO: send password to user registered
+        //TODO: send email with your password to user registered
 
         return user;
     }

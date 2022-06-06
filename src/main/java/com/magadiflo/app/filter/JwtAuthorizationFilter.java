@@ -20,6 +20,12 @@ import java.util.List;
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
+    /**
+     * ***** NOTA *****
+     * Cuando se inyecta vía constructor la anotación @Autowired normalmente no es necesaria
+     * (esto es así desde la versión 4.3 de spring) y la manera recomendada de inyectar por
+     * la documentación oficial es de hecho la de constructor.
+     */
     private final JWTTokenProvider jwtTokenProvider;
 
     public JwtAuthorizationFilter(JWTTokenProvider jwtTokenProvider) {
