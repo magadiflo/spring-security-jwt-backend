@@ -1,5 +1,7 @@
 package com.magadiflo.app.service.impl;
 
+import static com.magadiflo.app.constant.UserImplConstant.*;
+
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
 import com.magadiflo.app.enumeration.Role;
@@ -51,8 +53,8 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = this.userRepository.findUserByUsername(username);
         if (user == null) {
-            logger.error("User not found by username: {}", username);
-            throw new UsernameNotFoundException("User not found by username: " + username);
+            logger.error(NO_USER_FOUND_BY_USERNAME.concat("{}"), username);
+            throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME.concat(username));
         } else {
             user.setLastLoginDateDisplay(user.getLastLoginDate());
             user.setLastLoginDate(new Date());
@@ -60,7 +62,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
             this.userRepository.save(user);
 
             UserPrincipal userPrincipal = new UserPrincipal(user);
-            logger.info("Returning found user by username: {}", username);
+            logger.info(RETURNING_FOUND_USER_BY_USERNAME.concat("{}"), username);
             return userPrincipal;
         }
     }
@@ -97,51 +99,48 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
     @Override
     public List<User> getUsers() {
-        return null;
+        return this.userRepository.findAll();
     }
 
     @Override
     public User findUserByUsername(String username) {
-        return null;
+        return this.userRepository.findUserByUsername(username);
     }
 
     @Override
     public User findUserByEmail(String email) {
-        return null;
+        return this.userRepository.findUserByEmail(email);
     }
 
     private User validateNewUsernameAndEmail(String currentUsername, String newUsername, String newEmail)
             throws UserNotFoundException, UsernameExistException, EmailExistException {
 
-        if (StringUtils.isNotBlank(currentUsername)) {//Si el currentUsername no está en blanco, entonces se está tratando de ACTUALIZAR
+        User userByNewUsername = this.findUserByUsername(newUsername);
+        User userByNewEmail = this.findUserByEmail(newEmail);
+
+        if (StringUtils.isNotBlank(currentUsername)) {//Si existe el currentUsername se está tratando de ACTUALIZAR
             //Verificamos si existe el usuario con el username actual proporcionado
             User currentUser = this.findUserByUsername(currentUsername);
             if (currentUser == null) {
-                throw new UserNotFoundException("No user found by username ".concat(currentUsername));
+                throw new UserNotFoundException(NO_USER_FOUND_BY_USERNAME.concat(currentUsername));
             }
 
-            //Verificamos si el nuevo username ya alguien lo tiene registrado y además no es el mismo usuario actual
-            User userByNewUsername = this.findUserByUsername(newUsername);
             if (userByNewUsername != null && !currentUser.getId().equals(userByNewUsername.getId())) {
-                throw new UsernameExistException("Username already exists");
+                throw new UsernameExistException(USERNAME_ALREADY_EXISTS);
             }
 
-            //Verificamos si el nuevo email ya alguien lo tiene registrado y además no es el mismo usuario actual
-            User userByNewEmail = this.findUserByEmail(newEmail);
             if (userByNewEmail != null && !currentUser.getId().equals(userByNewEmail.getId())) {
-                throw new EmailExistException("Email already exists");
+                throw new EmailExistException(EMAIL_ALREADY_EXISTS);
             }
 
             return currentUser;
         } else { //Si es un nuevo usuario que se intenta crear
-            User userByUsername = this.findUserByUsername(newUsername);
-            if (userByUsername != null) { //Ese newUsername ya alguien lo tiene tomado
-                throw new UsernameExistException("Username already exists");
+            if (userByNewUsername != null) {
+                throw new UsernameExistException(USERNAME_ALREADY_EXISTS);
             }
 
-            User userByEmail = this.findUserByEmail(newEmail);
-            if (userByEmail != null) { //Ese newEmail ya alguien lo tiene tomado
-                throw new EmailExistException("Email already exists");
+            if (userByNewEmail != null) {
+                throw new EmailExistException(EMAIL_ALREADY_EXISTS);
             }
 
             return null;
@@ -163,6 +162,6 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     private String getTemporaryProfileImageUrl() {
         //ServletUriComponentsBuilder.fromCurrentContextPath(), devuelve cualquiera sea la URL del servidor real
         //Por ejemplo si estamos en local sería: http://localhost:8081
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/profile/temp").toUriString();
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH).toUriString();
     }
 }
