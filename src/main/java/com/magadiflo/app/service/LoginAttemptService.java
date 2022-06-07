@@ -5,9 +5,22 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Almacenará en la caché el número de intentos fallidos
+ * al iniciar sesión (usando la librería Guava).
+ * Se configura para que el usuario tenga únicamente 5 intentos.
+ * Con esta funcionalidad se quiere proteger a la aplicación
+ * de Ataques de Fuerza Bruta.
+ * <p>
+ * ------- CACHE --------
+ * USER             ATTEMPTS
+ * user 1           1
+ * user 2           3
+ * user 3           2
+ * <p>
  * Configuración usando librería guava de google
  * <a href="https://github.com/google/guava/wiki/CachesExplained">Google/Guava</a>
  */
@@ -19,6 +32,8 @@ public class LoginAttemptService {
     private static final int ATTEMPT_INCREMENT = 1;
     private LoadingCache<String, Integer> loginAttemptCache;
 
+    //Inicializando la Caché dentro del constructor
+    //maximumSize(100), tendremos 100 entradas en la caché como máximo
     public LoginAttemptService() {
         super();
         this.loginAttemptCache = CacheBuilder.newBuilder().expireAfterWrite(15, TimeUnit.MINUTES)
@@ -28,6 +43,22 @@ public class LoginAttemptService {
                         return 0;
                     }
                 });
+    }
+
+    //Desalojar al usuario de la caché de intento de inicio de sesión
+    //Elimina al usuario de la memoria de caché
+    public void evictUserFromLoginAttemptCache(String username) {
+        this.loginAttemptCache.invalidate(username);//Buscará una key con el "username" y lo eliminará junto a su valor
+    }
+
+    public void addUserToLoginAttemptCache(String username) throws ExecutionException {
+        int attempts = 0;
+        attempts = ATTEMPT_INCREMENT + this.loginAttemptCache.get(username);
+        this.loginAttemptCache.put(username, attempts);
+    }
+
+    public boolean hasExceededMaxAttempts(String username) throws ExecutionException {
+        return this.loginAttemptCache.get(username) >= MAXIMUM_NUMBER_OF_ATTEMPTS;
     }
 
 }
