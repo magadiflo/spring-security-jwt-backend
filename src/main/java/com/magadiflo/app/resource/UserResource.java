@@ -74,6 +74,12 @@ public class UserResource extends ExceptionHandling {
         return headers;
     }
 
+    /**
+     * UsernamePasswordAuthenticationToken, lo usamos para intentar iniciar sesión.
+     * En la clase AuthenticationFailureListener del evento se obtiene el getPrincipal();
+     * ese método getPrincipal devuelve precisamente ese "username" pasado como argumento
+     * que es del tipo String
+     */
     private void authenticate(String username, String password) {
         this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
