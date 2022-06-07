@@ -26,7 +26,7 @@ public class AuthenticationFailureListener {
      * pero no proporciona las credenciales correctas
      */
     @EventListener //Escuchamos el evento cada vez que ocurra
-    public void onAuthenticationFailure(AuthenticationFailureBadCredentialsEvent event) throws ExecutionException {
+    public void onAuthenticationFailure(AuthenticationFailureBadCredentialsEvent event) {
         this.logger.info("Se disparó el evento AuthenticationFailureBadCredentialsEvent por fallo de credenciales!!!");
         Object principal = event.getAuthentication().getPrincipal();
         if (principal instanceof String) {

@@ -10,6 +10,7 @@ import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.repository.IUserRepository;
 import com.magadiflo.app.service.IUserService;
+import com.magadiflo.app.service.LoginAttemptService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Transactional
@@ -37,12 +39,16 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final IUserRepository userRepository;
 
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired //Inyección de Dependencia basada en el constructor (Es la recomendada)
-    public UserServiceImpl(IUserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    private final LoginAttemptService loginAttemptService;
+
+    @Autowired
+    //Inyección de Dependencia basada en el constructor, en este tipo de inyección ya no sería necesario el @Autowired
+    public UserServiceImpl(IUserRepository userRepository, BCryptPasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.loginAttemptService = loginAttemptService;
     }
 
     /**
@@ -56,6 +62,8 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
             logger.error(NO_USER_FOUND_BY_USERNAME.concat("{}"), username);
             throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME.concat(username));
         } else {
+            this.validateLoginAttempt(user);
+
             user.setLastLoginDateDisplay(user.getLastLoginDate());
             user.setLastLoginDate(new Date());
 
@@ -163,5 +171,17 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         //ServletUriComponentsBuilder.fromCurrentContextPath(), devuelve cualquiera sea la URL del servidor real
         //Por ejemplo si estamos en local sería: http://localhost:8081
         return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH).toUriString();
+    }
+
+    private void validateLoginAttempt(User user) {
+        if (user.isNotLocked()) {
+            if (this.loginAttemptService.hasExceededMaxAttempts(user.getUsername())) {
+                user.setNotLocked(false); //La cuenta será bloqueada
+            } else {
+                user.setNotLocked(true); //La cuenta no estará bloqueada
+            }
+        } else { //Como la cuenta está bloqueada, solo para estar seguros eliminamos el usuario de la caché, si alguna vez estuvieron
+            this.loginAttemptService.evictUserFromLoginAttemptCache(user.getUsername());
+        }
     }
 }
