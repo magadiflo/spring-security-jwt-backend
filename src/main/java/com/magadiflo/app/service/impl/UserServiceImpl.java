@@ -2,6 +2,8 @@ package com.magadiflo.app.service.impl;
 
 import static com.magadiflo.app.constant.UserImplConstant.*;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.magadiflo.app.constant.FileConstant;
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
 import com.magadiflo.app.enumeration.Role;
@@ -30,7 +32,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.mail.MessagingException;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @Transactional
@@ -102,7 +103,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         user.setNotLocked(true);
         user.setRole(Role.ROLE_USER.name());
         user.setAuthorities(Role.ROLE_USER.getAuthorities());
-        user.setProfileImageUrl(this.getTemporaryProfileImageUrl());
+        user.setProfileImageUrl(this.getTemporaryProfileImageUrl(username));
 
         this.userRepository.save(user);
 
@@ -128,8 +129,32 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
     @Override
     public User addNewUser(String firstName, String lastName, String username, String email, String role,
-                           boolean isNotLocked, boolean isActive, MultipartFile profileImage) {
-        return null;
+                           boolean isNotLocked, boolean isActive, MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, UsernameExistException {
+
+        this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
+
+        String password = this.generatePassword();
+
+        User user = new User();
+        user.setUserId(this.generateUserId());
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setJoinDate(new Date());
+        user.setPassword(this.encodePassword(password));
+        user.setActive(isActive);
+        user.setNotLocked(isNotLocked);
+        user.setRole(this.getRoleEnumName(role).name());
+        user.setAuthorities(this.getRoleEnumName(role).getAuthorities());
+        user.setProfileImageUrl(this.getTemporaryProfileImageUrl(username));
+
+        this.userRepository.save(user);
+
+        this.saveProfileImage(user, profileImage);
+
+        return user;
     }
 
     @Override
@@ -201,10 +226,10 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         return this.passwordEncoder.encode(password);
     }
 
-    private String getTemporaryProfileImageUrl() {
+    private String getTemporaryProfileImageUrl(String username) {
         //ServletUriComponentsBuilder.fromCurrentContextPath(), devuelve cualquiera sea la URL del servidor real
         //Por ejemplo si estamos en local sería: http://localhost:8081
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH).toUriString();
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(FileConstant.DEFAULT_USER_IMAGE_PATH.concat(username)).toUriString();
     }
 
     private void validateLoginAttempt(User user) {
@@ -217,5 +242,12 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         } else { //Como la cuenta está bloqueada, solo para estar seguros eliminamos el usuario de la caché, si alguna vez estuvieron
             this.loginAttemptService.evictUserFromLoginAttemptCache(user.getUsername());
         }
+    }
+
+    private Role getRoleEnumName(String role) {
+        return null;
+    }
+
+    private void saveProfileImage(User user, MultipartFile profileImage) {
     }
 }

@@ -15,7 +15,7 @@ public class SpringSecurityJwtBackendApplication {
 		SpringApplication.run(SpringSecurityJwtBackendApplication.class, args);
 
 		//Creando el directorio donde se almacenarán las imágenes
-		//En el caso de mi pc sería: C:\Users\USUARIO\supportportal\user
+		//En el caso de mi pc sería: C:\\Users\\USUARIO\\supportportal\\user
 		new File(FileConstant.USER_FOLDER).mkdirs();
 	}
 
