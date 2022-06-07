@@ -1,5 +1,8 @@
 package com.magadiflo.app.service;
 
+import com.sun.mail.smtp.SMTPTransport;
+import org.springframework.stereotype.Service;
+
 import static com.magadiflo.app.constant.EmailConstant.*;
 
 import javax.mail.Message;
@@ -10,7 +13,16 @@ import javax.mail.internet.MimeMessage;
 import java.util.Date;
 import java.util.Properties;
 
+@Service
 public class EmailService {
+
+    public void sendNewPasswordEmail(String firstName, String password, String email) throws MessagingException {
+        Message message = this.createEmail(firstName, password, email);
+        SMTPTransport smtpTransport = (SMTPTransport) this.getEmailSession().getTransport(SIMPLE_MAIL_TRANSFER_PROTOCOL);
+        smtpTransport.connect(GMAIL_SMTP_SERVER, USERNAME, PASSWORD);
+        smtpTransport.sendMessage(message, message.getAllRecipients());
+        smtpTransport.close();
+    }
 
     private Session getEmailSession() {
         Properties properties = System.getProperties();
