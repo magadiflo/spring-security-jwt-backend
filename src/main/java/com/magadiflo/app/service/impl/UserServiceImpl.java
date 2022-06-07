@@ -9,6 +9,7 @@ import com.magadiflo.app.exception.domain.EmailExistException;
 import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.repository.IUserRepository;
+import com.magadiflo.app.service.EmailService;
 import com.magadiflo.app.service.IUserService;
 import com.magadiflo.app.service.LoginAttemptService;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.mail.MessagingException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -43,12 +45,16 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
     private final LoginAttemptService loginAttemptService;
 
+    private final EmailService emailService;
+
     @Autowired
     //Inyección de Dependencia basada en el constructor, en este tipo de inyección ya no sería necesario el @Autowired
-    public UserServiceImpl(IUserRepository userRepository, BCryptPasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService) {
+    public UserServiceImpl(IUserRepository userRepository, BCryptPasswordEncoder passwordEncoder,
+                           LoginAttemptService loginAttemptService, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.loginAttemptService = loginAttemptService;
+        this.emailService = emailService;
     }
 
     /**
@@ -77,7 +83,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
     @Override
     public User register(String firstName, String lastName, String username, String email)
-            throws UserNotFoundException, EmailExistException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, UsernameExistException, MessagingException {
 
         this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
         String password = this.generatePassword();
@@ -98,9 +104,8 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         user.setProfileImageUrl(this.getTemporaryProfileImageUrl());
 
         this.userRepository.save(user);
-        logger.info("New user password {}", password);
 
-        //TODO: send email with your password to user registered
+        this.emailService.sendNewPasswordEmail(firstName, password, email);
 
         return user;
     }

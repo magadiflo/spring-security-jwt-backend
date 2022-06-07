@@ -5,11 +5,12 @@ import com.magadiflo.app.exception.domain.EmailExistException;
 import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 
+import javax.mail.MessagingException;
 import java.util.List;
 
 public interface IUserService {
 
-    User register(String firstName, String lastName, String username, String email) throws UserNotFoundException, EmailExistException, UsernameExistException;
+    User register(String firstName, String lastName, String username, String email) throws UserNotFoundException, EmailExistException, UsernameExistException, MessagingException;
 
     List<User> getUsers();
 
