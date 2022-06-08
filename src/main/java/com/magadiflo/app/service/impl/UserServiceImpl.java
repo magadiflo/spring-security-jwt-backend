@@ -94,7 +94,6 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
         this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
         String password = this.generatePassword();
-        String encodePassword = this.encodePassword(password);
 
         User user = new User();
         user.setUserId(this.generateUserId());
@@ -103,7 +102,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         user.setUsername(username);
         user.setEmail(email);
         user.setJoinDate(new Date());
-        user.setPassword(encodePassword);
+        user.setPassword(this.encodePassword(password));
         user.setActive(true);
         user.setNotLocked(true);
         user.setRole(Role.ROLE_USER.name());
