@@ -1,6 +1,7 @@
 package com.magadiflo.app.service.impl;
 
 import static com.magadiflo.app.constant.UserImplConstant.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import com.magadiflo.app.constant.FileConstant;
 import com.magadiflo.app.domain.User;
@@ -30,6 +31,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 
@@ -130,7 +135,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     @Override
     public User addNewUser(String firstName, String lastName, String username, String email, String role,
                            boolean isNotLocked, boolean isActive, MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, UsernameExistException, IOException {
 
         this.validateNewUsernameAndEmail(StringUtils.EMPTY, username, email);
 
@@ -161,7 +166,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     @Override
     public User updateUser(String currentUsername, String newFirstName, String newLastName, String newUsername,
                            String newEmail, String role, boolean isNotLocked, boolean isActive, MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, UsernameExistException, IOException {
 
         User currentUser = this.validateNewUsernameAndEmail(currentUsername, newUsername, newEmail);
         currentUser.setFirstName(newFirstName);
@@ -188,7 +193,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     @Override
     public void resetPassword(String email) throws EmailNotFoundException, MessagingException {
         User user = this.userRepository.findUserByEmail(email);
-        if(user == null) {
+        if (user == null) {
             throw new EmailNotFoundException(NO_USER_FOUND_BY_EMAIL.concat(email));
         }
         String password = this.generatePassword();
@@ -200,7 +205,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
 
     @Override
     public User updateProfileImage(String username, MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, UsernameExistException, IOException {
         User user = this.validateNewUsernameAndEmail(username, null, null);
         this.saveProfileImage(user, profileImage);
         return user;
@@ -272,10 +277,28 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     }
 
     private Role getRoleEnumName(String role) {
-        return null;
+        return Role.valueOf(role.toUpperCase());
     }
 
-    private void saveProfileImage(User user, MultipartFile profileImage) {
+    private void saveProfileImage(User user, MultipartFile profileImage) throws IOException {
+        if (profileImage != null) {
+            Path userFolder = Paths.get(FileConstant.USER_FOLDER.concat(user.getUsername())).toAbsolutePath().normalize();
+            if (!Files.exists(userFolder)) {
+                Files.createDirectories(userFolder);
+                logger.info(FileConstant.DIRECTORY_CREATED.concat(String.valueOf(userFolder)));
+            }
+            Files.deleteIfExists(Paths.get(userFolder + FileConstant.DOT + FileConstant.JPG_EXTENSION)); //Elimina la imagen si existe
+            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + FileConstant.DOT + FileConstant.JPG_EXTENSION), REPLACE_EXISTING); //Con esta línea podríamos obviar la línea anterior, pero para estar seguros de que será una nueva imagen lo dejamos
 
+            user.setProfileImageUrl(this.setProfileImageUrl(user.getUsername()));
+
+            this.userRepository.save(user);
+            logger.info(FileConstant.FILE_SAVED_IN_FILE_SYSTEM.concat(profileImage.getOriginalFilename()));
+        }
+    }
+
+    private String setProfileImageUrl(String username) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(FileConstant.USER_IMAGE_PATH + username +
+                FileConstant.FORWARD_SLASH + username + FileConstant.DOT + FileConstant.JPG_EXTENSION).toUriString();
     }
 }
