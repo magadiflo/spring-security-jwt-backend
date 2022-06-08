@@ -1,10 +1,12 @@
 package com.magadiflo.app.resource;
 
 import com.magadiflo.app.constant.SecurityConstant;
+import com.magadiflo.app.domain.HttpResponse;
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
 import com.magadiflo.app.exception.ExceptionHandling;
 import com.magadiflo.app.exception.domain.EmailExistException;
+import com.magadiflo.app.exception.domain.EmailNotFoundException;
 import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.service.IUserService;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -31,6 +34,8 @@ import java.io.IOException;
 @RestController
 @RequestMapping(path = {"/", "/user"})
 public class UserResource extends ExceptionHandling {
+
+    public static final String EMAIL_SENT = "An email with a new password was sent to: ";
 
     private final IUserService userService;
     private final AuthenticationManager authenticationManager;
@@ -87,6 +92,41 @@ public class UserResource extends ExceptionHandling {
         return new ResponseEntity<>(newUser, HttpStatus.OK);
     }
 
+    @PostMapping("/update")
+    public ResponseEntity<User> update(@RequestParam String currentUsername,
+                                       @RequestParam String firstName,
+                                       @RequestParam String lastName,
+                                       @RequestParam String username,
+                                       @RequestParam String email,
+                                       @RequestParam String role,
+                                       @RequestParam String isActive,
+                                       @RequestParam String isNotLocked,
+                                       @RequestParam(required = false) MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+
+        User updatedUser = this.userService.updateUser(currentUsername, firstName, lastName, username, email, role,
+                Boolean.parseBoolean(isNotLocked), Boolean.parseBoolean(isActive), profileImage);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
+    @GetMapping("/find/{username}")
+    public ResponseEntity<User> getUser(@PathVariable String username) {
+        User user = this.userService.findUserByUsername(username);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<User>> getAllUsers() {
+        return new ResponseEntity<>(this.userService.getUsers(), HttpStatus.OK);
+    }
+
+    @GetMapping("/reset-password/{email}")
+    public ResponseEntity<HttpResponse> resetPassword(@PathVariable String email)
+            throws EmailNotFoundException, MessagingException {
+        this.userService.resetPassword(email);
+        return this.response(HttpStatus.OK, EMAIL_SENT.concat(email));
+    }
+
     private HttpHeaders getJwtHeader(UserPrincipal user) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(SecurityConstant.JWT_TOKEN_HEADER, this.jwtTokenProvider.generateJwtToken(user));
@@ -101,5 +141,10 @@ public class UserResource extends ExceptionHandling {
      */
     private void authenticate(String username, String password) {
         this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+    }
+
+    private ResponseEntity<HttpResponse> response(HttpStatus httpStatus, String message) {
+        HttpResponse httpResponse = new HttpResponse(httpStatus.value(), httpStatus, httpStatus.getReasonPhrase(), message);
+        return new ResponseEntity<>(httpResponse, httpStatus);
     }
 }
