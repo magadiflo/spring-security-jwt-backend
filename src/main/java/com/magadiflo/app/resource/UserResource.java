@@ -14,6 +14,7 @@ import com.magadiflo.app.utility.JWTTokenProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,7 @@ import java.util.List;
 public class UserResource extends ExceptionHandling {
 
     public static final String EMAIL_SENT = "An email with a new password was sent to: ";
+    public static final String USER_DELETED_SUCCESSFULLY = "User deleted successfully";
 
     private final IUserService userService;
     private final AuthenticationManager authenticationManager;
@@ -125,6 +127,21 @@ public class UserResource extends ExceptionHandling {
             throws EmailNotFoundException, MessagingException {
         this.userService.resetPassword(email);
         return this.response(HttpStatus.OK, EMAIL_SENT.concat(email));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('user:delete')")
+    //@PreAuthorize, esta anotación es posible gracias a que tenemos configurada @EnableGlobalMethodSecurity(prePostEnabled = true) en el SecurityConfiguration
+    public ResponseEntity<HttpResponse> deleteUser(@PathVariable Long id) {
+        this.userService.deleteUser(id);
+        return this.response(HttpStatus.NO_CONTENT, USER_DELETED_SUCCESSFULLY);
+    }
+
+    @PostMapping("/update-profile-image")
+    public ResponseEntity<User> updateProfileImage(@RequestParam String username, @RequestParam MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+        User user = this.userService.updateProfileImage(username, profileImage);
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal user) {
