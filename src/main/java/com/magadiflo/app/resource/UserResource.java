@@ -1,5 +1,6 @@
 package com.magadiflo.app.resource;
 
+import com.magadiflo.app.constant.FileConstant;
 import com.magadiflo.app.constant.SecurityConstant;
 import com.magadiflo.app.domain.HttpResponse;
 import com.magadiflo.app.domain.User;
@@ -13,6 +14,7 @@ import com.magadiflo.app.service.IUserService;
 import com.magadiflo.app.utility.JWTTokenProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -142,6 +146,11 @@ public class UserResource extends ExceptionHandling {
             throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
         User user = this.userService.updateProfileImage(username, profileImage);
         return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/image/{username}/{filename}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getImageProfile(@PathVariable String username, @PathVariable String filename) throws IOException {
+        return Files.readAllBytes(Paths.get(FileConstant.USER_FOLDER + username + FileConstant.FORWARD_SLASH + filename));
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal user) {
