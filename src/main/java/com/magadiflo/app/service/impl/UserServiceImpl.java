@@ -2,12 +2,12 @@ package com.magadiflo.app.service.impl;
 
 import static com.magadiflo.app.constant.UserImplConstant.*;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.magadiflo.app.constant.FileConstant;
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
 import com.magadiflo.app.enumeration.Role;
 import com.magadiflo.app.exception.domain.EmailExistException;
+import com.magadiflo.app.exception.domain.EmailNotFoundException;
 import com.magadiflo.app.exception.domain.UserNotFoundException;
 import com.magadiflo.app.exception.domain.UsernameExistException;
 import com.magadiflo.app.repository.IUserRepository;
@@ -153,30 +153,57 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         this.userRepository.save(user);
 
         this.saveProfileImage(user, profileImage);
+        logger.info("New user password: ".concat(password));
 
         return user;
     }
 
     @Override
     public User updateUser(String currentUsername, String newFirstName, String newLastName, String newUsername,
-                           String newEmail, String role, boolean isNotLocked, boolean isActive,
-                           MultipartFile profileImage) {
-        return null;
+                           String newEmail, String role, boolean isNotLocked, boolean isActive, MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, UsernameExistException {
+
+        User currentUser = this.validateNewUsernameAndEmail(currentUsername, newUsername, newEmail);
+        currentUser.setFirstName(newFirstName);
+        currentUser.setLastName(newLastName);
+        currentUser.setUsername(newUsername);
+        currentUser.setEmail(newEmail);
+        currentUser.setActive(isActive);
+        currentUser.setNotLocked(isNotLocked);
+        currentUser.setRole(this.getRoleEnumName(role).name());
+        currentUser.setAuthorities(this.getRoleEnumName(role).getAuthorities());
+
+        this.userRepository.save(currentUser);
+
+        this.saveProfileImage(currentUser, profileImage);
+
+        return currentUser;
     }
 
     @Override
     public void deleteUser(Long id) {
-
+        this.userRepository.deleteById(id);
     }
 
     @Override
-    public void resetPassword(String email) {
+    public void resetPassword(String email) throws EmailNotFoundException, MessagingException {
+        User user = this.userRepository.findUserByEmail(email);
+        if(user == null) {
+            throw new EmailNotFoundException(NO_USER_FOUND_BY_EMAIL.concat(email));
+        }
+        String password = this.generatePassword();
+        user.setPassword(this.encodePassword(password));
 
+        this.userRepository.save(user);
+        this.emailService.sendNewPasswordEmail(user.getFirstName(), password, user.getEmail());
     }
 
     @Override
-    public User updateProfileImage(String username, MultipartFile profileImage) {
-        return null;
+    public User updateProfileImage(String username, MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, UsernameExistException {
+        User user = this.validateNewUsernameAndEmail(username, null, null);
+        this.saveProfileImage(user, profileImage);
+        return user;
     }
 
     private User validateNewUsernameAndEmail(String currentUsername, String newUsername, String newEmail)
@@ -249,5 +276,6 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     }
 
     private void saveProfileImage(User user, MultipartFile profileImage) {
+
     }
 }
