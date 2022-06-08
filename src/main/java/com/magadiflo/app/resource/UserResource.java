@@ -15,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
 
 
 /**
@@ -67,6 +69,22 @@ public class UserResource extends ExceptionHandling {
         HttpHeaders jwtHeader = this.getJwtHeader(userPrincipal);
 
         return new ResponseEntity<>(loginUser, jwtHeader, HttpStatus.OK);
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<User> addNewUser(@RequestParam String firstName,
+                                           @RequestParam String lastName,
+                                           @RequestParam String username,
+                                           @RequestParam String email,
+                                           @RequestParam String role,
+                                           @RequestParam String isActive,
+                                           @RequestParam String isNotLocked,
+                                           @RequestParam(required = false) MultipartFile profileImage)
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+
+        User newUser = this.userService.addNewUser(firstName, lastName, username, email, role,
+                Boolean.parseBoolean(isNotLocked), Boolean.parseBoolean(isActive), profileImage);
+        return new ResponseEntity<>(newUser, HttpStatus.OK);
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal user) {
