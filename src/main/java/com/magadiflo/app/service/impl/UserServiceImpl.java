@@ -32,6 +32,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -288,7 +290,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
                 Files.createDirectories(userFolder);
                 logger.info(FileConstant.DIRECTORY_CREATED.concat(String.valueOf(userFolder)));
             }
-            Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + FileConstant.DOT + FileConstant.JPG_EXTENSION)); //Elimina la imagen si existe
+            Files.deleteIfExists(Paths.get(userFolder + FileConstant.FORWARD_SLASH + user.getUsername() + FileConstant.DOT + FileConstant.JPG_EXTENSION)); //Elimina la imagen si existe
             Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + FileConstant.DOT + FileConstant.JPG_EXTENSION), REPLACE_EXISTING); //Con esta línea podríamos obviar la línea anterior, pero para estar seguros de que será una nueva imagen lo dejamos
 
             user.setProfileImageUrl(this.setProfileImageUrl(user.getUsername()));
