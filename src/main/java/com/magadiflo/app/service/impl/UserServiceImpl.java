@@ -110,7 +110,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         user.setProfileImageUrl(this.getTemporaryProfileImageUrl(username));
 
         this.userRepository.save(user);
-
+        logger.info("Register New user password: {}", password);
         this.emailService.sendNewPasswordEmail(firstName, password, email);
 
         return user;
@@ -157,7 +157,7 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         this.userRepository.save(user);
 
         this.saveProfileImage(user, profileImage);
-        logger.info("New user password: ".concat(password));
+        logger.info("Add New user password: ".concat(password));
 
         return user;
     }
@@ -197,6 +197,8 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
         }
         String password = this.generatePassword();
         user.setPassword(this.encodePassword(password));
+
+        logger.info("Reset password: ".concat(password));
 
         this.userRepository.save(user);
         this.emailService.sendNewPasswordEmail(user.getFirstName(), password, user.getEmail());
