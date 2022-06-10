@@ -50,6 +50,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(this.userDetailsService).passwordEncoder(this.bCryptPasswordEncoder);
     }
 
+    /**
+     * cors(), dado que las llamadas no se producirán desde el mismo servidor si no desde aplicaciones cliente
+     * como Angular, React, Móviles, etc. habilitamos el cors, que permite llamadas a nuestro backend,
+     * pero necesitamos decirle a spring que eso tiene una configuración.
+     * Creamos un archivo de configuración que implementa WebMvcConfigurer y
+     * se especifica los orígenes de las llamadas así como los métodos permitidos.
+     * En el caso de este proyecto no se realizó esa configuración pero se debería hacer.
+     * Mirar el proyecto de Spring Security y JWT - Juan Cabello | iTana, ubicada en
+     * 06.spring_security_jwt_itana_youtube o lo desarrollado con Andrés Guzman
+     */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
