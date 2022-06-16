@@ -141,7 +141,7 @@ public class UserResource extends ExceptionHandling {
     //@PreAuthorize, esta anotación es posible gracias a que tenemos configurada @EnableGlobalMethodSecurity(prePostEnabled = true) en el SecurityConfiguration
     public ResponseEntity<HttpResponse> deleteUser(@PathVariable Long id) {
         this.userService.deleteUser(id);
-        return this.response(HttpStatus.NO_CONTENT, USER_DELETED_SUCCESSFULLY);
+        return this.response(HttpStatus.OK, USER_DELETED_SUCCESSFULLY);
     }
 
     @PostMapping("/update-profile-image")
