@@ -187,8 +187,12 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     }
 
     @Override
-    public void deleteUser(Long id) {
-        this.userRepository.deleteById(id);
+    public void deleteUser(String username) throws UserNotFoundException {
+        User user = this.userRepository.findUserByUsername(username);
+        if (user == null) {
+            throw new UserNotFoundException(NO_USER_FOUND_BY_USERNAME.concat(username));
+        }
+        this.userRepository.deleteById(user.getId());
     }
 
     @Override
