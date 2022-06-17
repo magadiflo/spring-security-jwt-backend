@@ -6,10 +6,7 @@ import com.magadiflo.app.domain.HttpResponse;
 import com.magadiflo.app.domain.User;
 import com.magadiflo.app.domain.UserPrincipal;
 import com.magadiflo.app.exception.ExceptionHandling;
-import com.magadiflo.app.exception.domain.EmailExistException;
-import com.magadiflo.app.exception.domain.EmailNotFoundException;
-import com.magadiflo.app.exception.domain.UserNotFoundException;
-import com.magadiflo.app.exception.domain.UsernameExistException;
+import com.magadiflo.app.exception.domain.*;
 import com.magadiflo.app.service.IUserService;
 import com.magadiflo.app.utility.JWTTokenProvider;
 import org.springframework.http.HttpHeaders;
@@ -94,7 +91,7 @@ public class UserResource extends ExceptionHandling {
                                            @RequestParam String isActive,
                                            @RequestParam String isNotLocked,
                                            @RequestParam(required = false) MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException, NotAnImageFileException {
 
         User newUser = this.userService.addNewUser(firstName, lastName, username, email, role,
                 Boolean.parseBoolean(isNotLocked), Boolean.parseBoolean(isActive), profileImage);
@@ -111,7 +108,7 @@ public class UserResource extends ExceptionHandling {
                                        @RequestParam String isActive,
                                        @RequestParam String isNotLocked,
                                        @RequestParam(required = false) MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException, NotAnImageFileException {
 
         User updatedUser = this.userService.updateUser(currentUsername, firstName, lastName, username, email, role,
                 Boolean.parseBoolean(isNotLocked), Boolean.parseBoolean(isActive), profileImage);
@@ -147,7 +144,7 @@ public class UserResource extends ExceptionHandling {
 
     @PostMapping("/update-profile-image")
     public ResponseEntity<User> updateProfileImage(@RequestParam String username, @RequestParam MultipartFile profileImage)
-            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException {
+            throws UserNotFoundException, EmailExistException, IOException, UsernameExistException, NotAnImageFileException {
         User user = this.userService.updateProfileImage(username, profileImage);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
