@@ -2,10 +2,7 @@ package com.magadiflo.app.exception;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.magadiflo.app.domain.HttpResponse;
-import com.magadiflo.app.exception.domain.EmailExistException;
-import com.magadiflo.app.exception.domain.EmailNotFoundException;
-import com.magadiflo.app.exception.domain.UserNotFoundException;
-import com.magadiflo.app.exception.domain.UsernameExistException;
+import com.magadiflo.app.exception.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.error.ErrorController;
@@ -152,6 +149,12 @@ public class ExceptionHandling implements ErrorController {
     public ResponseEntity<HttpResponse> iOException(IOException e) {
         this.logger.error(e.getMessage());
         return this.createHttpResponse(HttpStatus.INTERNAL_SERVER_ERROR, ERROR_PROCESSING_FILE);
+    }
+
+    @ExceptionHandler(NotAnImageFileException.class)
+    public ResponseEntity<HttpResponse> iOException(NotAnImageFileException e) {
+        this.logger.error(e.getMessage());
+        return this.createHttpResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
     /**
