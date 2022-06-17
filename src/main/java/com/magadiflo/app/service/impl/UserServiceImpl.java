@@ -17,6 +17,7 @@ import com.magadiflo.app.service.IUserService;
 import com.magadiflo.app.service.LoginAttemptService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.mail.MessagingException;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -187,11 +189,13 @@ public class UserServiceImpl implements IUserService, UserDetailsService {
     }
 
     @Override
-    public void deleteUser(String username) throws UserNotFoundException {
+    public void deleteUser(String username) throws UserNotFoundException, IOException {
         User user = this.userRepository.findUserByUsername(username);
         if (user == null) {
             throw new UserNotFoundException(NO_USER_FOUND_BY_USERNAME.concat(username));
         }
+        Path userFolder = Paths.get(FileConstant.USER_FOLDER.concat(user.getUsername())).toAbsolutePath().normalize();
+        FileUtils.deleteDirectory(new File(userFolder.toString()));
         this.userRepository.deleteById(user.getId());
     }
 

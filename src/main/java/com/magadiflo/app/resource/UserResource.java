@@ -139,7 +139,8 @@ public class UserResource extends ExceptionHandling {
     //@PreAuthorize, esta anotación es posible gracias a que tenemos configurada @EnableGlobalMethodSecurity(prePostEnabled = true) en el SecurityConfiguration
     @DeleteMapping("/delete/{username}")
     @PreAuthorize("hasAnyAuthority('user:delete')")
-    public ResponseEntity<HttpResponse> deleteUser(@PathVariable String username) throws UserNotFoundException {
+    public ResponseEntity<HttpResponse> deleteUser(@PathVariable String username)
+            throws UserNotFoundException, IOException {
         this.userService.deleteUser(username);
         return this.response(HttpStatus.OK, USER_DELETED_SUCCESSFULLY);
     }
