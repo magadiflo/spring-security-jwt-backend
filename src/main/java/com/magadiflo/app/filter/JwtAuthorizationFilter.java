@@ -69,3 +69,19 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     }
 
 }
+/**
+ * SecurityContext, se utiliza para almacenar los detalles del usuario autenticado actualmente,
+ * también conocido como principal. Por lo tanto, si tiene que obtener el nombre de usuario o cualquier otro
+ * detalle del usuario, primero debe obtener este SecurityContext.
+ *
+ * SecurityContextHolder, es una clase auxiliar que proporciona acceso al contexto de seguridad.
+ * Para obtener el nombre de usuario actual, primero necesita un SecurityContext, que se obtiene de SecurityContextHolder.
+ * Este SecurityContext mantiene los detalles del usuario en un objeto Authentication,
+ * que se puede obtener llamando al método getAuthentication().
+ *
+ * Una vez que haya obtenido el objeto Authentication, puede convertirlo en UserDetails o usarlo tal como está.
+ * El objeto UserDetails es el que Spring Security utiliza para conservar la información relacionada con el usuario.
+ *
+ * Read more:
+ * https://javarevisited.blogspot.com/2018/02/what-is-securitycontext-and-SecurityContextHolder-Spring-security.html#ixzz7cihaaV1W
+ */
