@@ -56,9 +56,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
      * pero necesitamos decirle a spring que eso tiene una configuración.
      * Creamos un archivo de configuración que implementa WebMvcConfigurer y
      * se especifica los orígenes de las llamadas así como los métodos permitidos.
-     * En el caso de este proyecto no se realizó esa configuración pero se debería hacer.
-     * Mirar el proyecto de Spring Security y JWT - Juan Cabello | iTana, ubicada en
-     * 06.spring_security_jwt_itana_youtube o lo desarrollado con Andrés Guzman
+     * En el método configure(...) habilitamos el cors, pero en la clase principal de esta aplicación
+     * definimos como un bean la configuración de nuestro cors personalizado
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
