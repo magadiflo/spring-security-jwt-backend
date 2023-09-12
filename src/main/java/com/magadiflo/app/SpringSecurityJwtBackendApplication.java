@@ -39,7 +39,7 @@ public class SpringSecurityJwtBackendApplication {
 
 		CorsConfiguration corsConfiguration = new CorsConfiguration();
 		corsConfiguration.setAllowCredentials(true);
-		corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
+		corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://192.168.0.3"));
 		corsConfiguration.setAllowedHeaders(Arrays.asList("Origin", "Access-Control-Allow-Origin", "Content-Type",
 				"Accept", "Jwt-Token", "Authorization", "Origin", "X-Requested-With", "Access-Control-Request-Method",
 				"Access-Control-Request-Headers"));
